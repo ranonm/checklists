@@ -12,4 +12,22 @@ import CoreData
 
 public class Checklist: NSManagedObject {
 
+    var numberOfItems: Int {
+        if let items = items {
+            return items.count
+        }
+        return 0
+    }
+    
+    func countUncheckedItems() -> Int {
+        var count = 0
+        if let items = items {
+            for item in items where item.isUnchecked() {
+                count += 1
+            }
+        }
+        return count
+    }
+    
+    
 }

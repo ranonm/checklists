@@ -78,15 +78,17 @@
 		F2C7C96F1D7B295100D81EC4 /* Checklists */ = {
 			isa = PBXGroup;
 			children = (
+				F2C7C9881D7CC04000D81EC4 /* AllListsViewController.swift */,
+				F2C7C9701D7B295100D81EC4 /* AppDelegate.swift */,
+				F2C7C9771D7B295100D81EC4 /* Assets.xcassets */,
 				F22CA7E41D9E34F6007F6E11 /* Checklist+CoreDataClass.swift */,
 				F22CA7E51D9E34F6007F6E11 /* Checklist+CoreDataProperties.swift */,
 				F22CA7E61D9E34F6007F6E11 /* ChecklistItem+CoreDataClass.swift */,
 				F22CA7E71D9E34F6007F6E11 /* ChecklistItem+CoreDataProperties.swift */,
-				F2C7C9881D7CC04000D81EC4 /* AllListsViewController.swift */,
-				F2C7C9701D7B295100D81EC4 /* AppDelegate.swift */,
-				F2C7C9771D7B295100D81EC4 /* Assets.xcassets */,
 				F2C7C9821D7B57DD00D81EC4 /* ChecklistItemViewCell.swift */,
+				F22CA7E11D9E3275007F6E11 /* Checklists.xcdatamodeld */,
 				F2C7C9721D7B295100D81EC4 /* ChecklistViewController.swift */,
+				F22CA7DF1D9E3224007F6E11 /* CoreDataStack.swift */,
 				F2C7C98E1D7DC7A300D81EC4 /* DataModel.swift */,
 				F2C7C9901D7EC3FE00D81EC4 /* IconPickerViewController.swift */,
 				F2C7C97C1D7B295100D81EC4 /* Info.plist */,
@@ -94,8 +96,6 @@
 				F2C7C9791D7B295100D81EC4 /* LaunchScreen.storyboard */,
 				F2C7C98C1D7D9E6800D81EC4 /* ListDetailViewController.swift */,
 				F2C7C9741D7B295100D81EC4 /* Main.storyboard */,
-				F22CA7DF1D9E3224007F6E11 /* CoreDataStack.swift */,
-				F22CA7E11D9E3275007F6E11 /* Checklists.xcdatamodeld */,
 			);
 			path = Checklists;
 			sourceTree = "<group>";
@@ -299,6 +299,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = Checklists/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ranonmartin.Checklists;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -311,6 +312,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = Checklists/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ranonmartin.Checklists;
 				PRODUCT_NAME = "$(TARGET_NAME)";

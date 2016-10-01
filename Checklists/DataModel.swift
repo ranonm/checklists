@@ -68,6 +68,7 @@ class DataModel {
     }
     
     func handleFirstTime() {
+    /*
         let userDefaults = UserDefaults.standard
         let firstTime = userDefaults.bool(forKey: "FirstTime")
         if firstTime {
@@ -77,6 +78,7 @@ class DataModel {
             userDefaults.set(false, forKey: "FirstTime")
             userDefaults.synchronize()
         }
+ */
     }
     
     class func nextChecklistItemID() -> Int {

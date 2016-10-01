@@ -7,18 +7,41 @@
 //
 
 import UIKit
+import CoreData
 
-class AllListsViewController: UITableViewController {
+class AllListsViewController: UITableViewController, NSFetchedResultsControllerDelegate {
     
-    var dataModel: DataModel!
+    var coreDataStack: CoreDataStack {
+        return CoreDataStack.shared
+    }
+    
+    var managedObjectContext: NSManagedObjectContext {
+        return coreDataStack.managedObjectContext
+    }
+    
+    lazy var fetchedResultsController: NSFetchedResultsController<Checklist> = {
+        let fetchRequest = Checklist.createFetchRequest()
+        let sort = NSSortDescriptor(key: "name", ascending: true)
+        fetchRequest.sortDescriptors = [sort]
+        fetchRequest.fetchBatchSize = 20
+        
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController.delegate = self
+        
+        return fetchedResultsController
+    }()
+    
+//    var dataModel: DataModel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        fetchChecklists()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
+        /*
         // Restore checklist state
         navigationController?.delegate = self
         
@@ -28,6 +51,7 @@ class AllListsViewController: UITableViewController {
             performSegue(withIdentifier: "ShowChecklist", sender: checklist)
         }
         // End checklist restoration
+ */
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -35,20 +59,44 @@ class AllListsViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    
+    // MARK: - Helper Methods
+    
+    private func fetchChecklists() {
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            print("Failed while fetching checklists: \(error)")
+        }
     }
+    
+    func cellForTableView(_ tableView: UITableView) -> UITableViewCell {
+        let cellIdentifier = "Cell"
+        if let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier) {
+            return cell
+        } else {
+            return UITableViewCell(style: .subtitle, reuseIdentifier: cellIdentifier)
+        }
+    }
+}
 
-    // MARK: - Table view data source
 
+// MARK: - UITableViewDataSource
+
+extension AllListsViewController {
+    
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return fetchedResultsController.sections?.count ?? 0
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dataModel.lists.count
+        let sectionInfo = fetchedResultsController.sections![section]
+        return sectionInfo.numberOfObjects
     }
-
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = cellForTableView(tableView)
-        let list = dataModel.lists[(indexPath as NSIndexPath).row]
+        let list = fetchedResultsController.object(at: indexPath)
         
         cell.textLabel!.text = list.name
         cell.imageView?.image = UIImage(named: list.iconName)
@@ -56,7 +104,7 @@ class AllListsViewController: UITableViewController {
         
         let count = list.countUncheckedItems()
         
-        if list.items.count == 0 {
+        if list.numberOfItems == 0 {
             cell.detailTextLabel!.text = "(No Items)"
         }else if count == 0 {
             cell.detailTextLabel!.text = "All Done!"
@@ -67,12 +115,24 @@ class AllListsViewController: UITableViewController {
         return cell
     }
     
-    // MARK: - Table view delegate
-    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let list = fetchedResultsController.object(at: indexPath)
+            managedObjectContext.delete(list)
+            coreDataStack.saveContext()
+        }
+    }
+}
+
+
+// MARK: - UITableViewDelegate
+
+extension AllListsViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        dataModel.indexOfSelectedChecklist = (indexPath as NSIndexPath).row
+        // TODO: - Remove the line below
+        //        dataModel.indexOfSelectedChecklist = (indexPath as NSIndexPath).row
         
-        let checklist = dataModel.lists[(indexPath as NSIndexPath).row]
+        let checklist = fetchedResultsController.object(at: indexPath)
         performSegue(withIdentifier: "ShowChecklist", sender: checklist)
     }
     
@@ -80,6 +140,7 @@ class AllListsViewController: UITableViewController {
         if segue.identifier == "ShowChecklist" {
             let controller = segue.destination as! ChecklistViewController
             controller.checklist = sender as! Checklist
+            
         } else if segue.identifier == "AddChecklist" {
             let navigation = segue.destination as! UINavigationController
             let controller = navigation.topViewController as! ListDetailViewController
@@ -95,31 +156,16 @@ class AllListsViewController: UITableViewController {
         let controller = navigationController.topViewController as! ListDetailViewController
         controller.delegate = self
         
-        let checklist = dataModel.lists[(indexPath as NSIndexPath).row]
+        let checklist = fetchedResultsController.object(at: indexPath)
         controller.checklistToEdit = checklist
         
         present(navigationController, animated: true, completion: nil)
     }
-    
-    // MARK: - Table View DataSource
-    
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        dataModel.lists.remove(at: (indexPath as NSIndexPath).row)
-        tableView.deleteRows(at: [indexPath], with: .automatic)
-    }
-    
 
-    // MARK: - Helper methods
-    
-    func cellForTableView(_ tableView: UITableView) -> UITableViewCell {
-        let cellIdentifier = "Cell"
-        if let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier) {
-            return cell
-        } else {
-            return UITableViewCell(style: .subtitle, reuseIdentifier: cellIdentifier)
-        }
-    }
 }
+
+
+// MARK: - ListDetailViewControllerDelegate
 
 extension AllListsViewController: ListDetailViewControllerDelegate {
     func listDetailViewControllerDidCancel(_ controller: ListDetailViewController) {
@@ -127,36 +173,47 @@ extension AllListsViewController: ListDetailViewControllerDelegate {
     }
     
     func listDetailViewController(_ controller: ListDetailViewController, didFinishAddingChecklist checklist: Checklist) {
-
-        dataModel.lists.append(checklist)
-        dataModel.sortChecklists()
-        
-        if let index = dataModel.lists.index(of: checklist) {
-            let indexPath = IndexPath(row: index, section: 0)
-            tableView.insertRows(at: [indexPath], with: .automatic)
-        }
-        
+        coreDataStack.saveContext()
         dismiss(animated: true, completion: nil)
     }
     
     func listDetailViewController(_ controller: ListDetailViewController, didFinishEditingChecklist checklist: Checklist) {
-        dataModel.sortChecklists()
-        
-        if let index = dataModel.lists.index(of: checklist) {
-            let indexPath = IndexPath(row: index, section: 0)
-            if let cell = tableView.cellForRow(at: indexPath) {
-                cell.textLabel!.text = checklist.name
-            }
-        }
-        
+        coreDataStack.saveContext()
         dismiss(animated: true, completion: nil)
     }
 }
 
 extension AllListsViewController: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        if viewController === self {
+        // TODO: Revise this
+        /*if viewController === self {
             dataModel.indexOfSelectedChecklist = -1
+        }*/
+    }
+}
+
+
+extension AllListsViewController {
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.beginUpdates()
+    }
+    
+    @objc(controller:didChangeObject:atIndexPath:forChangeType:newIndexPath:) func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        
+        switch type {
+        case .delete:
+            tableView.deleteRows(at: [indexPath!], with: .automatic)
+        case .insert:
+            tableView.insertRows(at: [newIndexPath!], with: .automatic)
+        case .update:
+            tableView.deleteRows(at: [indexPath!], with: .automatic)
+            tableView.insertRows(at: [newIndexPath!], with: .automatic)
+        default:
+            return
         }
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.endUpdates()
     }
 }

@@ -17,7 +17,7 @@ extension Checklist {
 
     @NSManaged public var name: String
     @NSManaged public var iconName: String
-    @NSManaged public var items: NSSet?
+    @NSManaged public var items: Set<ChecklistItem>?
 
 }
 
@@ -31,9 +31,9 @@ extension Checklist {
     @NSManaged public func removeFromItems(_ value: ChecklistItem)
 
     @objc(addItems:)
-    @NSManaged public func addToItems(_ values: NSSet)
+    @NSManaged public func addToItems(_ values: Set<ChecklistItem>)
 
     @objc(removeItems:)
-    @NSManaged public func removeFromItems(_ values: NSSet)
+    @NSManaged public func removeFromItems(_ values: Set<ChecklistItem>)
 
 }
