@@ -21,13 +21,14 @@ class ChecklistViewController: UITableViewController {
     
     lazy var fetchedResultsController: NSFetchedResultsController<ChecklistItem> = {
         let sortByText = NSSortDescriptor(key: "text", ascending: true)
+        let sortByCompletion = NSSortDescriptor(key: "checked", ascending: true)
         
         let fetchRequest = ChecklistItem.createFetchRequest()
-        fetchRequest.sortDescriptors = [sortByText]
+        fetchRequest.sortDescriptors = [sortByCompletion, sortByText]
         fetchRequest.fetchBatchSize = 20
         fetchRequest.predicate = NSPredicate(format: "checklist == %@", self.checklist)
         
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: "checked", cacheName: nil)
         fetchedResultsController.delegate = self
         
         return fetchedResultsController
@@ -107,6 +108,14 @@ extension ChecklistViewController {
         configureCheckmarkForCell(cell, withCheckListItem: checklistItem)
         
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        switch section {
+        case 0: return "Open"
+        case 1: return "Completed"
+        default: return ""
+        }
     }
     
     
@@ -194,6 +203,18 @@ extension ChecklistViewController: NSFetchedResultsControllerDelegate {
             }
         }
     }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        switch type {
+        case .insert:
+            tableView.insertSections(IndexSet(integer: sectionIndex), with: .automatic)
+        case .delete:
+            tableView.insertSections(IndexSet(integer: sectionIndex), with: .automatic)
+        default:
+            break
+        }
+    }
+    
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.endUpdates()
