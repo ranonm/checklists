@@ -14,7 +14,7 @@ public class Checklist: NSManagedObject {
     
     override init(entity: NSEntityDescription, insertInto context: NSManagedObjectContext?) {
         super.init(entity: entity, insertInto: context)
-        iconName = "No Icon"
+        iconName = "Folder"
     }
 
     var numberOfItems: Int {
