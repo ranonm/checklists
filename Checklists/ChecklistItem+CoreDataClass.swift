@@ -12,12 +12,6 @@ import CoreData
 
 public class ChecklistItem: NSManagedObject {
     
-    
-    override init(entity: NSEntityDescription, insertInto context: NSManagedObjectContext?) {
-        super.init(entity: entity, insertInto: context)
-        
-    }
-    
     convenience init(withText text: String, andReminder shouldRemind: Bool, for dueDate: Date, in context: NSManagedObjectContext) {
         self.init(context: context)
         self.shouldRemind = shouldRemind
