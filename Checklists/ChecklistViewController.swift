@@ -21,14 +21,13 @@ class ChecklistViewController: UITableViewController, NSFetchedResultsController
     
     lazy var fetchedResultsController: NSFetchedResultsController<ChecklistItem> = {
         let sortByText = NSSortDescriptor(key: "text", ascending: true)
-        let sortByCompletion = NSSortDescriptor(key: "checked", ascending: true)
         
         let fetchRequest = ChecklistItem.createFetchRequest()
-        fetchRequest.sortDescriptors = [sortByCompletion, sortByText]
+        fetchRequest.sortDescriptors = [sortByText]
         fetchRequest.fetchBatchSize = 20
         fetchRequest.predicate = NSPredicate(format: "checklist == %@", self.checklist)
         
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: "checked", cacheName: nil)
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchedResultsController.delegate = self
         
         return fetchedResultsController
