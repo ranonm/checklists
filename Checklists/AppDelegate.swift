@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
  
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        registerDefaults()
+        StateManager.shared.initialize()
         return true
     }
 
@@ -36,18 +36,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
     }
-
-    
-    // MARK: - Helper methods
-    
-    func registerDefaults() {
-        let dictionary = ["ChecklistIndex": -1,
-                          "FirstTime": true,
-                          "ChecklistItemID": 0 ] as [String : Any]
-        
-        UserDefaults.standard.register(defaults: dictionary)
-    }
-
-
 }
 

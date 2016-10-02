@@ -9,17 +9,21 @@
 import UIKit
 import CoreData
 
-class AllListsViewController: UITableViewController, NSFetchedResultsControllerDelegate {
+class AllListsViewController: UITableViewController {
     
-    var coreDataStack: CoreDataStack {
+    fileprivate var coreDataStack: CoreDataStack {
         return CoreDataStack.shared
     }
     
-    var managedObjectContext: NSManagedObjectContext {
+    fileprivate var stateManager: StateManager {
+        return StateManager.shared
+    }
+    
+    fileprivate var managedObjectContext: NSManagedObjectContext {
         return coreDataStack.managedObjectContext
     }
     
-    lazy var fetchedResultsController: NSFetchedResultsController<Checklist> = {
+    fileprivate lazy var fetchedResultsController: NSFetchedResultsController<Checklist> = {
         let fetchRequest = Checklist.createFetchRequest()
         let sort = NSSortDescriptor(key: "name", ascending: true)
         fetchRequest.sortDescriptors = [sort]
@@ -31,38 +35,36 @@ class AllListsViewController: UITableViewController, NSFetchedResultsControllerD
         return fetchedResultsController
     }()
     
-//    var dataModel: DataModel!
+    private var numberOfLists: Int {
+        return self.fetchedResultsController.fetchedObjects?.count ?? 0
+    }
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        fetchChecklists()
+    
+        loadChecklists()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        /*
+        
         // Restore checklist state
         navigationController?.delegate = self
         
-        let index = dataModel.indexOfSelectedChecklist
-        if index >= 0 && index < dataModel.lists.count {
-            let checklist = dataModel.lists[index]
-            performSegue(withIdentifier: "ShowChecklist", sender: checklist)
+        let index = stateManager.indexOfSelectedChecklist
+        if index >= 0 && index < numberOfLists {
+            if let fetchedObjects = fetchedResultsController.fetchedObjects {
+                let checklist = fetchedObjects[index]
+                performSegue(withIdentifier: "ShowChecklist", sender: checklist)
+            }
         }
-        // End checklist restoration
- */
     }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        tableView.reloadData()
-    }
-    
+
     
     // MARK: - Helper Methods
     
-    private func fetchChecklists() {
+    private func loadChecklists() {
         do {
             try fetchedResultsController.performFetch()
         } catch {
@@ -129,8 +131,7 @@ extension AllListsViewController {
 
 extension AllListsViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // TODO: - Remove the line below
-        //        dataModel.indexOfSelectedChecklist = (indexPath as NSIndexPath).row
+        stateManager.indexOfSelectedChecklist =  indexPath.row
         
         let checklist = fetchedResultsController.object(at: indexPath)
         performSegue(withIdentifier: "ShowChecklist", sender: checklist)
@@ -183,17 +184,21 @@ extension AllListsViewController: ListDetailViewControllerDelegate {
     }
 }
 
+
+
 extension AllListsViewController: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        // TODO: Revise this
-        /*if viewController === self {
-            dataModel.indexOfSelectedChecklist = -1
-        }*/
+        // Resets the selected checklist index
+        if viewController === self {
+            stateManager.resetSelectedChecklistIndex()
+        }
     }
 }
 
 
-extension AllListsViewController {
+// MARK: - NSFetchedResultsControllerDelegate
+
+extension AllListsViewController: NSFetchedResultsControllerDelegate {
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.beginUpdates()
     }
@@ -202,14 +207,23 @@ extension AllListsViewController {
         
         switch type {
         case .delete:
-            tableView.deleteRows(at: [indexPath!], with: .automatic)
+            if let indexPath = indexPath {
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+            }
+            break
         case .insert:
-            tableView.insertRows(at: [newIndexPath!], with: .automatic)
+            if let newIndexPath = newIndexPath {
+                tableView.insertRows(at: [newIndexPath], with: .automatic)
+            }
+            break
         case .update:
-            tableView.deleteRows(at: [indexPath!], with: .automatic)
-            tableView.insertRows(at: [newIndexPath!], with: .automatic)
+            if let indexPath = indexPath, let newIndexPath = newIndexPath {
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+                tableView.insertRows(at: [newIndexPath], with: .automatic)
+            }
+            break
         default:
-            return
+            break
         }
     }
     
