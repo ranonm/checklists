@@ -116,9 +116,7 @@ class ItemDetailViewController: UITableViewController {
     
     @IBAction func done(_ sender: AnyObject) {
         if let item = itemToEdit {
-            item.text = textField.text!
-            item.shouldRemind = shouldRemindSwitch.isOn
-            item.dueDate = dueDate
+            item.modifyWithText(textField.text!, andReminder: shouldRemindSwitch.isOn, for: dueDate)
 //            item.scheduleNotification()
             
             delegate?.itemDetailViewController(self, didFinishEditingItem: item)

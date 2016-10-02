@@ -21,6 +21,12 @@ public class ChecklistItem: NSManagedObject {
         self.checked = false
     }
     
+    func modifyWithText(_ text: String, andReminder shouldRemind: Bool, for dueDate: Date) {
+        self.shouldRemind = shouldRemind
+        self.dueDate = dueDate
+        self.text = text
+    }
+    
     func isChecked() -> Bool {
         return checked
     }
