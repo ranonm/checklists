@@ -24,7 +24,7 @@ public class Checklist: NSManagedObject {
         return 0
     }
     
-    func countUncheckedItems() -> Int {
+    var numberOfUncheckedItems: Int {
         var count = 0
         if let items = items {
             for item in items where item.isUnchecked() {
@@ -33,6 +33,5 @@ public class Checklist: NSManagedObject {
         }
         return count
     }
-    
     
 }

@@ -106,14 +106,12 @@ extension AllListsViewController {
         cell.imageView?.image = UIImage(named: list.iconName)
         cell.accessoryType = .detailDisclosureButton
         
-        let count = list.countUncheckedItems()
-        
         if list.numberOfItems == 0 {
             cell.detailTextLabel!.text = "(No Items)"
-        }else if count == 0 {
+        }else if list.numberOfUncheckedItems == 0 {
             cell.detailTextLabel!.text = "All Done!"
         } else {
-            cell.detailTextLabel!.text = "\(count) Remaining"
+            cell.detailTextLabel!.text = "\(list.numberOfUncheckedItems) Remaining"
         }
         
         return cell
