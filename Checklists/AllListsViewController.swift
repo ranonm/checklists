@@ -39,6 +39,8 @@ class AllListsViewController: UITableViewController {
         return self.fetchedResultsController.fetchedObjects?.count ?? 0
     }
     
+    fileprivate var selectedIndexPath: IndexPath?
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -132,6 +134,7 @@ extension AllListsViewController {
 extension AllListsViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         stateManager.indexOfSelectedChecklist =  indexPath.row
+        selectedIndexPath = indexPath
         
         let checklist = fetchedResultsController.object(at: indexPath)
         performSegue(withIdentifier: "ShowChecklist", sender: checklist)
@@ -189,6 +192,11 @@ extension AllListsViewController: ListDetailViewControllerDelegate {
 extension AllListsViewController: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
         if viewController === self {
+            // Reload the previously selected row
+            if let indexPath = selectedIndexPath {
+                tableView.reloadRows(at: [indexPath], with: .none)
+            }
+            
             stateManager.resetSelectedChecklistIndex()
         }
     }
