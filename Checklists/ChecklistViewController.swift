@@ -129,6 +129,8 @@ extension ChecklistViewController {
         if let cell = tableView.cellForRow(at: indexPath) {
             let checklistItem = fetchedResultsController.object(at: indexPath)
             checklistItem.toggleChecked()
+            coreDataStack.saveContext()
+            
             configureCheckmarkForCell(cell, withCheckListItem: checklistItem)
         }
         

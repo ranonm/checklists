@@ -123,10 +123,7 @@ class ItemDetailViewController: UITableViewController {
             
             delegate?.itemDetailViewController(self, didFinishEditingItem: item)
         } else {
-            let item = ChecklistItem(context: managedObjectContext)
-            item.text = textField.text!
-            item.shouldRemind = shouldRemindSwitch.isOn
-            item.dueDate = dueDate
+            let item = ChecklistItem(withText: textField.text!, andReminder: shouldRemindSwitch.isOn, for: dueDate, in: managedObjectContext)
 //            item.scheduleNotification()
 
             delegate?.itemDetailViewController(self, didFinishAddingItem: item)

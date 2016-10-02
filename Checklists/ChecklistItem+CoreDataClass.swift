@@ -12,10 +12,19 @@ import CoreData
 
 public class ChecklistItem: NSManagedObject {
     
+    
     override init(entity: NSEntityDescription, insertInto context: NSManagedObjectContext?) {
         super.init(entity: entity, insertInto: context)
-        itemID = nextChecklistItemID()
-        checked = false
+        
+    }
+    
+    convenience init(withText text: String, andReminder shouldRemind: Bool, for dueDate: Date, in context: NSManagedObjectContext) {
+        self.init(context: context)
+        self.shouldRemind = shouldRemind
+        self.dueDate = dueDate
+        self.text = text
+        self.itemID = nextChecklistItemID()
+        self.checked = false
     }
     
     func isChecked() -> Bool {
