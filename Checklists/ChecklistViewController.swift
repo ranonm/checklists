@@ -9,7 +9,7 @@
 import UIKit
 import CoreData
 
-class ChecklistViewController: UITableViewController, NSFetchedResultsControllerDelegate {
+class ChecklistViewController: UITableViewController {
     
     var coreDataStack: CoreDataStack {
         return CoreDataStack.shared
@@ -108,6 +108,8 @@ extension ChecklistViewController {
         
         return cell
     }
+    
+    
 }
 
 
@@ -162,7 +164,8 @@ extension ChecklistViewController: ItemDetailViewControllerDelegate {
 
 // MARK: - NSFetchedResultsControllerDelegate
 
-extension ChecklistViewController {
+extension ChecklistViewController: NSFetchedResultsControllerDelegate {
+    
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.beginUpdates()
     }
@@ -173,26 +176,30 @@ extension ChecklistViewController {
             if let newIndexPath = newIndexPath {
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
             }
-            break
         case .delete:
             if let indexPath = indexPath {
                 tableView.deleteRows(at: [indexPath], with: .automatic)
             }
-            break
-        case .update:
+        case .update, .move:
             if let indexPath = indexPath, let newIndexPath = newIndexPath {
-                tableView.deleteRows(at: [indexPath], with: .automatic)
-                tableView.insertRows(at: [newIndexPath], with: .automatic)
+                
+                var rowAnimation: UITableViewRowAnimation = .automatic
+                
+                if indexPath.compare(newIndexPath) == .orderedSame {
+                    rowAnimation = .none
+                }
+                    
+                tableView.deleteRows(at: [indexPath], with: rowAnimation)
+                tableView.insertRows(at: [newIndexPath], with: rowAnimation)
             }
-            break
-        default:
-            break
         }
     }
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.endUpdates()
     }
+    
+    
 }
 
 
