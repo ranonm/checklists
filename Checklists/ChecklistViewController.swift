@@ -19,6 +19,7 @@ class ChecklistViewController: UITableViewController {
         return coreDataStack.managedObjectContext
     }
     
+    
     lazy var fetchedResultsController: NSFetchedResultsController<ChecklistItem> = {
         let sortByText = NSSortDescriptor(key: "text", ascending: true)
         let sortByCompletion = NSSortDescriptor(key: "checked", ascending: true)
@@ -111,11 +112,10 @@ extension ChecklistViewController {
     }
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch section {
-        case 0: return "Open"
-        case 1: return "Completed"
-        default: return ""
+        if section == 1 {
+            return "Completed items"
         }
+        return nil
     }
     
     
@@ -211,12 +211,11 @@ extension ChecklistViewController: NSFetchedResultsControllerDelegate {
         case .insert:
             tableView.insertSections(IndexSet(integer: sectionIndex), with: .automatic)
         case .delete:
-            tableView.insertSections(IndexSet(integer: sectionIndex), with: .automatic)
+            tableView.deleteSections(IndexSet(integer: sectionIndex), with: .automatic)
         default:
             break
         }
     }
-    
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.endUpdates()

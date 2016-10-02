@@ -188,7 +188,6 @@ extension AllListsViewController: ListDetailViewControllerDelegate {
 
 extension AllListsViewController: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        // Resets the selected checklist index
         if viewController === self {
             stateManager.resetSelectedChecklistIndex()
         }
@@ -216,13 +215,11 @@ extension AllListsViewController: NSFetchedResultsControllerDelegate {
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
             }
             break
-        case .update:
+        case .update, .move:
             if let indexPath = indexPath, let newIndexPath = newIndexPath {
                 tableView.deleteRows(at: [indexPath], with: .automatic)
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
             }
-            break
-        default:
             break
         }
     }
