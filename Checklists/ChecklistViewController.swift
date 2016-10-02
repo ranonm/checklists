@@ -112,7 +112,7 @@ extension ChecklistViewController {
     }
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section == 1 {
+        if section == 1 || (section == 0 && checklist.numberOfUncheckedItems == 0)  {
             return "Completed items"
         }
         return nil
