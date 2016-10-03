@@ -113,10 +113,24 @@ extension ChecklistViewController {
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if section == 1 || (section == 0 && checklist.numberOfUncheckedItems == 0)  {
-            return "Completed items"
+            return "COMPLETED ITEMS"
         }
         return nil
     }
+    
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        if section == 1 || (section == 0 && checklist.numberOfUncheckedItems == 0)  {
+            return 50
+        }
+        return 0
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        let header = view as! UITableViewHeaderFooterView
+        header.textLabel?.font = UIFont.systemFont(ofSize: 14)
+        header.textLabel?.textColor = UIColor.lightGray
+    }
+    
     
     
 }
