@@ -8,9 +8,14 @@
 
 import Foundation
 import CoreData
+import UserNotifications
 
 
 public class ChecklistItem: NSManagedObject {
+    
+    private lazy var notificationCenter: UNUserNotificationCenter = {
+        return UNUserNotificationCenter.current()
+    }()
     
     convenience init(withText text: String, andReminder shouldRemind: Bool, for dueDate: Date, in context: NSManagedObjectContext) {
         self.init(context: context)
@@ -47,40 +52,37 @@ public class ChecklistItem: NSManagedObject {
         return itemID
     }
     
-    /*
     func scheduleNotification() {
-        let existingNotification = notificationForThisItem()
-        if let notification = existingNotification {
-            UIApplication.shared.cancelLocalNotification(notification)
-        }
+        unscheduleNotification()
         
         if shouldRemind && dueDate.compare(Date()) != .orderedAscending {
-            let localNotification = scheduleNotification()
-            localNotification.fireDate = dueDate
-            localNotification.timeZone = TimeZone.current
-            localNotification.alertBody = text
-            localNotification.soundName = UILocalNotificationDefaultSoundName
-            localNotification.userInfo = ["ItemID": itemID]
+ 
+            var reminderDate = Calendar.current.dateComponents([.day, .month, .year, .hour, .minute], from: dueDate)
+            reminderDate.timeZone = TimeZone.current
             
-            UIApplication.shared.scheduleLocalNotification(localNotification)
+            let calendarTrigger = UNCalendarNotificationTrigger(dateMatching: reminderDate, repeats: false)
+            
+            let content = UNMutableNotificationContent()
+            content.title = String.localizedStringWithFormat("Checklist Reminder")
+            content.body = text
+            content.sound = UNNotificationSound.default()
+            
+            let request = UNNotificationRequest(identifier: String(itemID), content: content, trigger: calendarTrigger)
+            notificationCenter.add(request, withCompletionHandler: { (error) in
+                if let error = error {
+                    print("failed with error: \(error)")
+                } else {
+                    print("notification scheduled")
+                }
+            })
         }
     }
     
-    func notificationForThisItem() -> UILocalNotification? {
-        let allNotifications = UIApplication.shared.scheduledLocalNotifications!
-        
-        for notification in allNotifications {
-            if let number = notification.userInfo?["ItemID"] as? Int , number == itemID {
-                return notification
-            }
-        }
-        return nil
+    func unscheduleNotification() {
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: [String(itemID)])
     }
     
     deinit {
-        if let notification = notificationForThisItem() {
-            UIApplication.shared.cancelLocalNotification(notification)
-        }
+        unscheduleNotification()
     }
-    */
 }

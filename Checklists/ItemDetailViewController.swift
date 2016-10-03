@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import CoreData
+import UserNotifications
 
 protocol ItemDetailViewControllerDelegate: class {
     func itemDetailViewControllerDidCancel(_ controller: ItemDetailViewController)
@@ -117,12 +118,12 @@ class ItemDetailViewController: UITableViewController {
     @IBAction func done(_ sender: AnyObject) {
         if let item = itemToEdit {
             item.modifyWithText(textField.text!, andReminder: shouldRemindSwitch.isOn, for: dueDate)
-//            item.scheduleNotification()
+            item.scheduleNotification()
             
             delegate?.itemDetailViewController(self, didFinishEditingItem: item)
         } else {
             let item = ChecklistItem(withText: textField.text!, andReminder: shouldRemindSwitch.isOn, for: dueDate, in: managedObjectContext)
-//            item.scheduleNotification()
+            item.scheduleNotification()
 
             delegate?.itemDetailViewController(self, didFinishAddingItem: item)
         }
@@ -138,8 +139,13 @@ class ItemDetailViewController: UITableViewController {
         textField.resignFirstResponder()
         
         if switchControl.isOn {
-            let notificationSettings = UIUserNotificationSettings(types: [.alert, .sound], categories: nil)
-            UIApplication.shared.registerUserNotificationSettings(notificationSettings)
+            let notificationCenter = UNUserNotificationCenter.current()
+            let options: UNAuthorizationOptions = [.alert, .badge, .sound]
+            notificationCenter.requestAuthorization(options: options) { (granted, error) in
+                if granted {
+                    print("Local notifications authorization granted.")
+                }
+            }
         }
     }
     

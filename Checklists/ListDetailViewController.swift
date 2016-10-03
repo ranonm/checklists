@@ -76,7 +76,6 @@ class ListDetailViewController: UITableViewController {
             checklist.iconName = iconName
             
             delegate?.listDetailViewController(self, didFinishAddingChecklist: checklist)
-            
         }
     }
 }
