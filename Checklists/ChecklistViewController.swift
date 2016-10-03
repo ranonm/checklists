@@ -185,16 +185,16 @@ extension ChecklistViewController: NSFetchedResultsControllerDelegate {
         switch type {
         case .insert:
             if let newIndexPath = newIndexPath {
-                tableView.insertRows(at: [newIndexPath], with: .automatic)
+                tableView.insertRows(at: [newIndexPath], with: .fade)
             }
         case .delete:
             if let indexPath = indexPath {
-                tableView.deleteRows(at: [indexPath], with: .automatic)
+                tableView.deleteRows(at: [indexPath], with: .fade)
             }
         case .update, .move:
             if let indexPath = indexPath, let newIndexPath = newIndexPath {
                 
-                var rowAnimation: UITableViewRowAnimation = .automatic
+                var rowAnimation: UITableViewRowAnimation = .fade
                 
                 if indexPath.compare(newIndexPath) == .orderedSame {
                     rowAnimation = .none
@@ -209,9 +209,9 @@ extension ChecklistViewController: NSFetchedResultsControllerDelegate {
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
         switch type {
         case .insert:
-            tableView.insertSections(IndexSet(integer: sectionIndex), with: .automatic)
+            tableView.insertSections(IndexSet(integer: sectionIndex), with: .fade)
         case .delete:
-            tableView.deleteSections(IndexSet(integer: sectionIndex), with: .automatic)
+            tableView.deleteSections(IndexSet(integer: sectionIndex), with: .fade)
         default:
             break
         }
