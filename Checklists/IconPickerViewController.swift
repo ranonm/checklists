@@ -25,7 +25,13 @@ class IconPickerViewController: UITableViewController {
         "Groceries",
         "Inbox",
         "Photos",
-        "Trips"
+        "Trips",
+        "Fitness",
+        "Movies",
+        "Shopping",
+        "Finances",
+        "Medical",
+        "Work"
     ]
     
     // MARK: - Table View DataSource

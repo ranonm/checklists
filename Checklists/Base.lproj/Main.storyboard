@@ -458,5 +458,5 @@
     <inferredMetricsTieBreakers>
         <segue reference="eug-OM-pon"/>
     </inferredMetricsTieBreakers>
-    <color key="tintColor" red="0.015686274509803921" green="0.66274509803921566" blue="0.92156862745098034" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+    <color key="tintColor" red="0.0" green="0.59999999999999998" blue="0.79607843137254897" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
 </document>
