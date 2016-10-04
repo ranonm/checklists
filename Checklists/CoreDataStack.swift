@@ -15,6 +15,7 @@ class CoreDataStack {
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "Checklists")
         container.loadPersistentStores(completionHandler: { storeDescription, error in
+            print("Location: \(storeDescription.url)")
             if let error = error {
                 fatalError("CoreData error: \(error)")
             }

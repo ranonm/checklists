@@ -12,11 +12,6 @@ import CoreData
 
 public class Checklist: NSManagedObject {
     
-    override init(entity: NSEntityDescription, insertInto context: NSManagedObjectContext?) {
-        super.init(entity: entity, insertInto: context)
-        iconName = "Folder"
-    }
-
     var numberOfItems: Int {
         if let items = items {
             return items.count
