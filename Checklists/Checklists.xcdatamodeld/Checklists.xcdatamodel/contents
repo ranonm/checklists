@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="11232" systemVersion="16A323" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Checklist" representedClassName=".Checklist" syncable="YES">
+        <attribute name="iconName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ChecklistItem" inverseName="checklist" inverseEntity="ChecklistItem" syncable="YES"/>
+    </entity>
+    <entity name="ChecklistItem" representedClassName=".ChecklistItem" syncable="YES">
+        <attribute name="checked" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="dueDate" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="itemID" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="shouldRemind" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="text" attributeType="String" syncable="YES"/>
+        <relationship name="checklist" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Checklist" inverseName="items" inverseEntity="Checklist" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="Checklist" positionX="-63" positionY="-18" width="128" height="90"/>
+        <element name="ChecklistItem" positionX="342" positionY="45" width="128" height="133"/>
+    </elements>
+</model>

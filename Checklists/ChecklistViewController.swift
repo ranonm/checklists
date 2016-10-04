@@ -7,45 +7,66 @@
 //
 
 import UIKit
+import CoreData
 
 class ChecklistViewController: UITableViewController {
     
-    var items = [ChecklistItem]()
+    var coreDataStack: CoreDataStack {
+        return CoreDataStack.shared
+    }
+    
+    var managedObjectContext: NSManagedObjectContext {
+        return coreDataStack.managedObjectContext
+    }
+    
+    
+    lazy var fetchedResultsController: NSFetchedResultsController<ChecklistItem> = {
+        let sortByText = NSSortDescriptor(key: "text", ascending: true)
+        let sortByCompletion = NSSortDescriptor(key: "checked", ascending: true)
+        
+        let fetchRequest = ChecklistItem.createFetchRequest()
+        fetchRequest.sortDescriptors = [sortByCompletion, sortByText]
+        fetchRequest.fetchBatchSize = 20
+        fetchRequest.predicate = NSPredicate(format: "checklist == %@", self.checklist)
+        
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.managedObjectContext, sectionNameKeyPath: "checked", cacheName: nil)
+        fetchedResultsController.delegate = self
+        
+        return fetchedResultsController
+    }()
+    
     var checklist: Checklist!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         title = checklist.name
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-}
-
-
-extension ChecklistViewController {
-    // MARK: - UITableViewDataSource
-    
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return checklist.items.count
+        
+        fetchChecklistItems()
     }
     
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "AddItem" {
+            
+            let navigationController = segue.destination as! UINavigationController
+            let controller = navigationController.topViewController as! ItemDetailViewController
+            
+            controller.delegate = self
+            
+        } else if segue.identifier == "EditItem" {
+            
+            let navigationController = segue.destination as! UINavigationController
+            let controller = navigationController.topViewController as! ItemDetailViewController
+            
+            controller.delegate = self
+            
+            if let indexPath = tableView.indexPath(for: sender as! UITableViewCell) {
+                controller.itemToEdit = fetchedResultsController.object(at: indexPath)
+            }
+        }
     }
+
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ChecklistItem", for: indexPath) as! ChecklistItemViewCell
-        let checklistItem = checklist.items[(indexPath as NSIndexPath).row]
-        
-        cell.titleLabel.text = checklistItem.text
-        
-        configureCheckmarkForCell(cell, withCheckListItem: checklistItem)
-        
-        return cell
-    }
+    // MARK: - Helper Methods
     
     func configureCheckmarkForCell(_ cell: UITableViewCell, withCheckListItem item: ChecklistItem) {
         if let cell = cell as? ChecklistItemViewCell {
@@ -57,14 +78,73 @@ extension ChecklistViewController {
             }
         }
     }
+    
+    func fetchChecklistItems() {
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            print("Error occurred during fetching: \(error)")
+        }
+    }
+}
 
+
+// MARK: - UITableViewDataSource
+
+extension ChecklistViewController {
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return fetchedResultsController.sections?.count ?? 0
+    }
     
-    //    - MARK : UITableViewDelegate
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        let sectionInfo = fetchedResultsController.sections![section]
+        return sectionInfo.numberOfObjects
+    }
     
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ChecklistItem", for: indexPath) as! ChecklistItemViewCell
+        
+        let checklistItem = fetchedResultsController.object(at: indexPath)
+        cell.titleLabel.text = checklistItem.text
+        configureCheckmarkForCell(cell, withCheckListItem: checklistItem)
+        
+        return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        if section == 1 || (section == 0 && checklist.numberOfUncheckedItems == 0)  {
+            return "COMPLETED ITEMS"
+        }
+        return nil
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        if section == 1 || (section == 0 && checklist.numberOfUncheckedItems == 0)  {
+            return 50
+        }
+        return 0
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        let header = view as! UITableViewHeaderFooterView
+        header.textLabel?.font = UIFont.systemFont(ofSize: 14)
+        header.textLabel?.textColor = UIColor.lightGray
+    }
+    
+    
+    
+}
+
+
+// MARK: - UITableViewDelegate
+
+extension ChecklistViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let cell = tableView.cellForRow(at: indexPath) {
-            let checklistItem = checklist.items[(indexPath as NSIndexPath).row]
+            let checklistItem = fetchedResultsController.object(at: indexPath)
             checklistItem.toggleChecked()
+            coreDataStack.saveContext()
+            
             configureCheckmarkForCell(cell, withCheckListItem: checklistItem)
         }
         
@@ -72,61 +152,90 @@ extension ChecklistViewController {
     }
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        checklist.items.remove(at: (indexPath as NSIndexPath).row)
-        tableView.deleteRows(at: [indexPath], with: .automatic)
+        
+        if editingStyle == .delete {
+            let checklistItem = fetchedResultsController.object(at: indexPath)
+            managedObjectContext.delete(checklistItem)
+            
+            coreDataStack.saveContext()
+        }
     }
 }
 
 
+// MARK: - ItemDetailViewControllerDelegate
+
 extension ChecklistViewController: ItemDetailViewControllerDelegate {
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "AddItem" {
-            let navigationController = segue.destination as! UINavigationController
-            let controller = navigationController.topViewController as! ItemDetailViewController
-            
-            controller.delegate = self
-        } else if segue.identifier == "EditItem" {
-            let navigationController = segue.destination as! UINavigationController
-            let controller = navigationController.topViewController as! ItemDetailViewController
-            
-            controller.delegate = self
-            
-            if let indexPath = tableView.indexPath(for: sender as! UITableViewCell) {
-                controller.itemToEdit = checklist.items[(indexPath as NSIndexPath).row]
-            }
-        }
-    }
-    
     
     func itemDetailViewControllerDidCancel(_ controller: ItemDetailViewController) {
         dismiss(animated: true, completion: nil)
     }
     
     func itemDetailViewController(_ controller: ItemDetailViewController, didFinishAddingItem item: ChecklistItem) {
-        
-        let newRowIndex = checklist.items.count
-        
-        checklist.items.append(item)
-        
-        let indexPath = IndexPath(row: newRowIndex, section: 0)
-        tableView.insertRows(at: [indexPath], with: .automatic)
+        item.checklist = checklist
+        coreDataStack.saveContext()
         
         dismiss(animated: true, completion: nil)
     }
-    
-    func itemDetailViewController(_ controller: ItemDetailViewController, didFinidhEditingItem item: ChecklistItem) {
-        let index = (checklist.items as NSArray).index(of: item)
-        if index != NSNotFound {
-            let indexPath = IndexPath(row: index, section: 0)
-            if let cell = tableView.cellForRow(at: indexPath) as? ChecklistItemViewCell {
-                cell.textLabel!.text = checklist.items[(indexPath as NSIndexPath).row].text
-            }
-        }
+
+    func itemDetailViewController(_ controller: ItemDetailViewController, didFinishEditingItem item: ChecklistItem) {
+        coreDataStack.saveContext()
         
         dismiss(animated: true, completion: nil)
     }
+ 
 }
 
+
+// MARK: - NSFetchedResultsControllerDelegate
+
+extension ChecklistViewController: NSFetchedResultsControllerDelegate {
+    
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.beginUpdates()
+    }
+    
+    @objc(controller:didChangeObject:atIndexPath:forChangeType:newIndexPath:) func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            if let newIndexPath = newIndexPath {
+                tableView.insertRows(at: [newIndexPath], with: .fade)
+            }
+        case .delete:
+            if let indexPath = indexPath {
+                tableView.deleteRows(at: [indexPath], with: .fade)
+            }
+        case .update, .move:
+            if let indexPath = indexPath, let newIndexPath = newIndexPath {
+                
+                var rowAnimation: UITableViewRowAnimation = .fade
+                
+                if indexPath.compare(newIndexPath) == .orderedSame {
+                    rowAnimation = .none
+                }
+                    
+                tableView.deleteRows(at: [indexPath], with: rowAnimation)
+                tableView.insertRows(at: [newIndexPath], with: rowAnimation)
+            }
+        }
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        switch type {
+        case .insert:
+            tableView.insertSections(IndexSet(integer: sectionIndex), with: .fade)
+        case .delete:
+            tableView.deleteSections(IndexSet(integer: sectionIndex), with: .fade)
+        default:
+            break
+        }
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.endUpdates()
+    }
+    
+    
+}
 
 

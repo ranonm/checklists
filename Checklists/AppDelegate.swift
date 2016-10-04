@@ -12,16 +12,9 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    let dataModel = DataModel()
-
-
+ 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        
-        let navigationController = window!.rootViewController as! UINavigationController
-        let controller = navigationController.viewControllers[0] as! AllListsViewController
-        
-        controller.dataModel = dataModel
-        
+        StateManager.shared.initialize()
         return true
     }
 
@@ -31,7 +24,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
-        saveData()
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
@@ -43,15 +35,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
-        saveData()
     }
-    
-    // MARK: - Helper methods
-    
-    func saveData() {
-        dataModel.saveChecklists()
-    }
-
-
 }
 

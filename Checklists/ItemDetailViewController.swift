@@ -8,18 +8,25 @@
 
 import Foundation
 import UIKit
+import CoreData
+import UserNotifications
 
 protocol ItemDetailViewControllerDelegate: class {
     func itemDetailViewControllerDidCancel(_ controller: ItemDetailViewController)
     
     func itemDetailViewController(_ controller: ItemDetailViewController, didFinishAddingItem item: ChecklistItem)
     
-    func itemDetailViewController(_ controller: ItemDetailViewController, didFinidhEditingItem item: ChecklistItem)
+    func itemDetailViewController(_ controller: ItemDetailViewController, didFinishEditingItem item: ChecklistItem)
 }
 
 class ItemDetailViewController: UITableViewController {
     
     weak var delegate: ItemDetailViewControllerDelegate?
+    
+    var managedObjectContext: NSManagedObjectContext {
+        return CoreDataStack.shared.managedObjectContext
+    }
+    
     var itemToEdit: ChecklistItem?
     var dueDate = Date()
     var datePickerVisible = false
@@ -54,6 +61,9 @@ class ItemDetailViewController: UITableViewController {
         super.viewWillDisappear(animated)
         textField.resignFirstResponder()
     }
+    
+    
+    // MARK: - Helper Methods
     
     func updateDueDateLabel() {
         let formatter = DateFormatter()
@@ -98,24 +108,26 @@ class ItemDetailViewController: UITableViewController {
         }
     }
     
+    
+    // MARK: - Action Methods
+    
     @IBAction func cancel(_ sender: AnyObject) {
         delegate?.itemDetailViewControllerDidCancel(self)
     }
     
     @IBAction func done(_ sender: AnyObject) {
         if let item = itemToEdit {
-            item.text = textField.text!
-            item.shouldRemind = shouldRemindSwitch.isOn
-            item.dueDate = dueDate
+            item.modifyWithText(textField.text!, andReminder: shouldRemindSwitch.isOn, for: dueDate)
             item.scheduleNotification()
-            delegate?.itemDetailViewController(self, didFinidhEditingItem: item)
+            
+            delegate?.itemDetailViewController(self, didFinishEditingItem: item)
         } else {
-            let item = ChecklistItem(text: textField.text!)
-            item.shouldRemind = shouldRemindSwitch.isOn
-            item.dueDate = dueDate
+            let item = ChecklistItem(withText: textField.text!, andReminder: shouldRemindSwitch.isOn, for: dueDate, in: managedObjectContext)
             item.scheduleNotification()
+
             delegate?.itemDetailViewController(self, didFinishAddingItem: item)
         }
+        
     }
     
     @IBAction func dateChanged(_ datePicker: UIDatePicker) {
@@ -127,13 +139,22 @@ class ItemDetailViewController: UITableViewController {
         textField.resignFirstResponder()
         
         if switchControl.isOn {
-            let notificationSettings = UIUserNotificationSettings(types: [.alert, .sound], categories: nil)
-            UIApplication.shared.registerUserNotificationSettings(notificationSettings)
+            let notificationCenter = UNUserNotificationCenter.current()
+            let options: UNAuthorizationOptions = [.alert, .badge, .sound]
+            notificationCenter.requestAuthorization(options: options) { (granted, error) in
+                if granted {
+                    print("Local notifications authorization granted.")
+                }
+            }
         }
     }
     
-    
-    // MARK: - Table View DataSource
+}
+
+
+// MARK: - UITableViewDataSource
+
+extension ItemDetailViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if (indexPath as NSIndexPath).section == 1 && (indexPath as NSIndexPath).row == 2 {
             return datePickerCell
@@ -165,12 +186,12 @@ class ItemDetailViewController: UITableViewController {
         }
         return super.tableView(tableView, indentationLevelForRowAt: newIndexPath)
     }
-    
 }
 
-extension ItemDetailViewController: UITextFieldDelegate {
-    // MARK: - Table View Delegate
-    
+
+// MARK: - UITableViewDelegate
+
+extension ItemDetailViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         textField.resignFirstResponder()
@@ -183,16 +204,20 @@ extension ItemDetailViewController: UITextFieldDelegate {
             }
         }
     }
-
+    
     override func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
         if (indexPath as NSIndexPath).section == 1 && (indexPath as NSIndexPath).row == 1 {
             return indexPath
         }
         return nil
     }
-    
-    // -MARK: UITextFieldDelegate
-    
+
+}
+
+
+// MARK: - UITextFieldDelegate
+
+extension ItemDetailViewController: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let oldText: NSString = textField.text! as NSString
         let newText: NSString = oldText.replacingCharacters(in: range, with: string) as NSString
@@ -201,7 +226,6 @@ extension ItemDetailViewController: UITextFieldDelegate {
 
         return true
     }
-    
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         hideDatePicker()

@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreData
 
 protocol ListDetailViewControllerDelegate: class {
     func listDetailViewControllerDidCancel(_ controller: ListDetailViewController)
@@ -22,6 +23,10 @@ class ListDetailViewController: UITableViewController {
     @IBOutlet weak var doneBarButton: UIBarButtonItem!
     
     weak var delegate: ListDetailViewControllerDelegate?
+    
+    var managedObjectContext: NSManagedObjectContext {
+        return CoreDataStack.shared.managedObjectContext
+    }
     
     var checklistToEdit: Checklist?
     var iconName = "Folder"
@@ -49,22 +54,36 @@ class ListDetailViewController: UITableViewController {
         textField.resignFirstResponder()
     }
     
+    
+    // MARK: - Action Methods
+    
     @IBAction func cancel() {
         delegate?.listDetailViewControllerDidCancel(self)
     }
     
     @IBAction func done() {
         if let checklist = checklistToEdit {
+            
             checklist.name = textField.text!
             checklist.iconName = iconName
+            
             delegate?.listDetailViewController(self, didFinishEditingChecklist: checklist)
+            
         } else {
-            let checklist = Checklist(name: textField.text!, iconName: iconName)
+            
+            let checklist = Checklist(context: managedObjectContext)
+            checklist.name = textField.text!
+            checklist.iconName = iconName
+            
             delegate?.listDetailViewController(self, didFinishAddingChecklist: checklist)
         }
     }
-    
-    // MARK: - Table view delegate
+}
+
+
+// MARK: - UITableViewDelegate
+
+extension ListDetailViewController {
     override func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
         if (indexPath as NSIndexPath).section == 1 {
             return indexPath
@@ -72,6 +91,9 @@ class ListDetailViewController: UITableViewController {
         return nil
     }
 }
+
+
+// MARK: - UITextFieldDelegate
 
 extension ListDetailViewController: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
@@ -83,6 +105,8 @@ extension ListDetailViewController: UITextFieldDelegate {
     }
 }
 
+
+// MARK: - IconPickerViewControllerDelegate
 
 extension ListDetailViewController: IconPickerViewControllerDelegate {
     
